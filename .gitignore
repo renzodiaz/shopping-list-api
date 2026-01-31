@@ -30,3 +30,16 @@
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
+
+# Ignore Rubymine
+.idea
+*.iml
+
+# VS Code
+.vscode/
+
+# Mac
+.DS_Store
+
+# Test coverage
+/coverage/
