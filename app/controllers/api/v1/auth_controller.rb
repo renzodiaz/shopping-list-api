@@ -1,6 +1,6 @@
 module Api::V1
   class AuthController < BaseController
-    skip_before_action :doorkeeper_authorize!, only: [:register]
+    skip_before_action :doorkeeper_authorize!, only: [ :register ]
 
     def register
       user = User.new(user_params)
