@@ -75,6 +75,7 @@ RSpec.configure do |config|
   # Incluce test libraries
   # Factory Bot
   config.include FactoryBot::Syntax::Methods
+  config.include RequestHelpers, type: :request
 
   config.before(:suite) do
     DatabaseCleaner.strategy = :transaction
@@ -86,6 +87,4 @@ RSpec.configure do |config|
       example.run
     end
   end
-
-  config.include Helpers
 end

@@ -12,3 +12,9 @@ plugins:
 #   Enabled: false
 AllCops:
   NewCops: enable
+
+RSpec/MultipleExpectations:
+  Max: 3 # Allow up to 3 expectations per test
+
+RSpec/NestedGroups:
+  Max: 4
