@@ -132,8 +132,8 @@ Doorkeeper.configure do
   # Defaults to +ActionController::Base+ unless +api_only+ is set, which changes the default to
   # +ActionController::API+. The return value of this option must be a stringified class name.
   # See https://doorkeeper.gitbook.io/guides/configuration/other-configurations#custom-controllers
-  #
-  # base_controller 'ApplicationController'
+  api_only
+  base_controller "ActionController::API"
 
   # Reuse access token for the same resource owner within an application (disabled by default).
   #
