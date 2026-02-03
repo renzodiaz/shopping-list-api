@@ -35,12 +35,6 @@ RSpec.describe "Api::V1::Auth", type: :request do
         expect(attributes["email"]).to eq("newuser@example.com")
       end
 
-      it "generates a jti for the user" do
-        post "/api/v1/auth/register", params: valid_attributes
-        user = User.last
-        expect(user.jti).to be_present
-      end
-
       it "does not return the password" do
         post "/api/v1/auth/register", params: valid_attributes
         attributes = json_response.dig("data", "attributes")

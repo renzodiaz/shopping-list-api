@@ -13,12 +13,4 @@ class User < ApplicationRecord
            class_name: "Doorkeeper::AccessToken",
            foreign_key: :resource_owner_id,
            dependent: :delete_all # or :destroy if you need callbacks
-
-  before_create :generate_jti
-
-  private
-
-  def generate_jti
-    self.jti ||= SecureRandom.uuid
-  end
 end
