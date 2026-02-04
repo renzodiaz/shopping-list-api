@@ -14,7 +14,13 @@ AllCops:
   NewCops: enable
 
 RSpec/MultipleExpectations:
-  Max: 3 # Allow up to 3 expectations per test
+  Max: 3
 
 RSpec/NestedGroups:
   Max: 4
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 10
+
+RSpec/ExampleLength:
+  Max: 10
