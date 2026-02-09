@@ -72,10 +72,11 @@ RSpec.configure do |config|
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
 
-  # Incluce test libraries
+  # Include test libraries
   # Factory Bot
   config.include FactoryBot::Syntax::Methods
   config.include RequestHelpers, type: :request
+  config.include ActiveSupport::Testing::TimeHelpers
 
   config.before(:suite) do
     DatabaseCleaner.strategy = :transaction

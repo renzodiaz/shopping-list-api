@@ -1,10 +1,24 @@
 module Api::V1
   class BaseController < ApplicationController
     before_action :doorkeeper_authorize!
+    before_action :require_confirmed_email!
 
     rescue_from ActiveRecord::RecordNotFound, with: :resource_not_found
 
     protected
+
+    def require_confirmed_email!
+      return if current_user&.email_confirmed?
+
+      render json: {
+        errors: [{
+          status: "403",
+          title: "Forbidden",
+          code: "email_not_confirmed",
+          detail: "Please confirm your email address to access this resource"
+        }]
+      }, status: :forbidden
+    end
 
     def current_user
       return unless doorkeeper_token

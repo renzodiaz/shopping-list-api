@@ -10,7 +10,9 @@ Doorkeeper.configure do
   # This block will be called to check whether the resource owner is authenticated or not.
   resource_owner_from_credentials do |_routes|
     user = User.find_for_database_authentication(email: params[:username])
-    user if user&.valid_password?(params[:password])
+    if user&.valid_password?(params[:password])
+      user.email_confirmed? ? user : nil
+    end
   end
 
   access_token_generator "::Doorkeeper::JWT"
