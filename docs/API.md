@@ -22,8 +22,11 @@
    - [Members](#members)
    - [Invitations (Owner)](#invitations-owner)
    - [Invitations (Invitee)](#invitations-invitee)
-4. [Error Responses](#error-responses)
-5. [Authorization Matrix](#authorization-matrix)
+4. [Shopping Lists](#shopping-lists)
+   - [List Management](#list-management)
+   - [List Items](#list-items)
+5. [Error Responses](#error-responses)
+6. [Authorization Matrix](#authorization-matrix)
 
 ---
 
@@ -493,6 +496,211 @@ Joins the household as a member.
 
 ---
 
+## Shopping Lists
+
+### List Management
+
+#### List Shopping Lists
+
+Returns all shopping lists for a household.
+
+**Endpoint:** `GET /api/v1/households/:household_id/shopping_lists`
+**Auth Required:** Yes (member or owner)
+
+**Success Response:** `200 OK`
+```json
+{
+  "data": [
+    {
+      "id": "1",
+      "type": "shopping_list",
+      "attributes": {
+        "name": "Weekly Groceries",
+        "status": "active",
+        "items_count": 5,
+        "pending_count": 3,
+        "checked_count": 2,
+        "completed_at": null,
+        "created_at": "2024-02-09T12:00:00.000Z"
+      }
+    }
+  ]
+}
+```
+
+#### Get Shopping List
+
+**Endpoint:** `GET /api/v1/households/:household_id/shopping_lists/:id`
+**Auth Required:** Yes (member or owner)
+
+#### Create Shopping List
+
+**Endpoint:** `POST /api/v1/households/:household_id/shopping_lists`
+**Auth Required:** Yes (owner only)
+
+**Request Body:**
+```json
+{
+  "shopping_list": {
+    "name": "Weekly Groceries"
+  }
+}
+```
+
+**Success Response:** `201 Created`
+
+#### Update Shopping List
+
+**Endpoint:** `PUT /api/v1/households/:household_id/shopping_lists/:id`
+**Auth Required:** Yes (owner only)
+
+**Request Body:**
+```json
+{
+  "shopping_list": {
+    "name": "Monthly Groceries"
+  }
+}
+```
+
+#### Delete Shopping List
+
+**Endpoint:** `DELETE /api/v1/households/:household_id/shopping_lists/:id`
+**Auth Required:** Yes (owner only)
+
+**Success Response:** `204 No Content`
+
+#### Complete Shopping List
+
+Marks the list as completed with a timestamp.
+
+**Endpoint:** `POST /api/v1/households/:household_id/shopping_lists/:id/complete`
+**Auth Required:** Yes (owner only)
+
+#### Duplicate Shopping List
+
+Creates a copy of the list with all items reset to pending status.
+
+**Endpoint:** `POST /api/v1/households/:household_id/shopping_lists/:id/duplicate`
+**Auth Required:** Yes (owner only)
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | string | Custom name for the copy (default: "Original Name (Copy)") |
+
+**Success Response:** `201 Created`
+
+---
+
+### List Items
+
+Items are ordered with pending items first, then checked/not_in_stock items.
+
+#### List Items
+
+**Endpoint:** `GET /api/v1/shopping_lists/:shopping_list_id/items`
+**Auth Required:** Yes (member or owner)
+
+**Success Response:** `200 OK`
+```json
+{
+  "data": [
+    {
+      "id": "1",
+      "type": "shopping_list_item",
+      "attributes": {
+        "display_name": "Whole Milk",
+        "custom_name": null,
+        "quantity": "2.0",
+        "status": "pending",
+        "checked_at": null,
+        "position": 1
+      },
+      "relationships": {
+        "item": { "data": { "id": "1", "type": "item" } },
+        "unit_type": { "data": { "id": "1", "type": "unit_type" } },
+        "added_by": { "data": { "id": "1", "type": "user" } }
+      }
+    }
+  ]
+}
+```
+
+#### Add Item
+
+Add an item from the catalog or a custom free-text item.
+
+**Endpoint:** `POST /api/v1/shopping_lists/:shopping_list_id/items`
+**Auth Required:** Yes (member or owner)
+
+**Request Body (Catalog Item):**
+```json
+{
+  "item": {
+    "item_id": 1,
+    "quantity": 2,
+    "unit_type_id": 1
+  }
+}
+```
+
+**Request Body (Custom Item):**
+```json
+{
+  "item": {
+    "custom_name": "Organic Almond Milk",
+    "quantity": 1
+  }
+}
+```
+
+**Success Response:** `201 Created`
+
+#### Update Item
+
+**Endpoint:** `PUT /api/v1/shopping_lists/:shopping_list_id/items/:id`
+**Auth Required:** Yes (member or owner)
+
+**Request Body:**
+```json
+{
+  "item": {
+    "quantity": 3
+  }
+}
+```
+
+#### Delete Item
+
+**Endpoint:** `DELETE /api/v1/shopping_lists/:shopping_list_id/items/:id`
+**Auth Required:** Yes (member or owner)
+
+**Success Response:** `204 No Content`
+
+#### Check Item (Mark as Purchased)
+
+**Endpoint:** `POST /api/v1/shopping_lists/:shopping_list_id/items/:id/check`
+**Auth Required:** Yes (member or owner)
+
+Sets `status` to `checked` and records `checked_at` timestamp.
+
+#### Uncheck Item
+
+**Endpoint:** `POST /api/v1/shopping_lists/:shopping_list_id/items/:id/uncheck`
+**Auth Required:** Yes (member or owner)
+
+Sets `status` back to `pending` and clears `checked_at`.
+
+#### Mark Item Not In Stock
+
+**Endpoint:** `POST /api/v1/shopping_lists/:shopping_list_id/items/:id/not_in_stock`
+**Auth Required:** Yes (member or owner)
+
+Sets `status` to `not_in_stock` and records `checked_at` timestamp.
+
+---
+
 ## Error Responses
 
 ### Standard Error Format
@@ -555,6 +763,20 @@ Joins the household as a member.
 | Update item | ✅ | Custom items only |
 | Delete item | ✅ | Custom items only |
 
+### Shopping List Permissions
+
+| Action | Owner | Member | Non-member |
+|--------|:-----:|:------:|:----------:|
+| List shopping lists | ✅ | ✅ | ❌ |
+| View shopping list | ✅ | ✅ | ❌ |
+| Create shopping list | ✅ | ❌ | ❌ |
+| Update shopping list | ✅ | ❌ | ❌ |
+| Delete shopping list | ✅ | ❌ | ❌ |
+| Complete shopping list | ✅ | ❌ | ❌ |
+| Duplicate shopping list | ✅ | ❌ | ❌ |
+| Add/Edit/Delete list items | ✅ | ✅ | ❌ |
+| Check/Uncheck items | ✅ | ✅ | ❌ |
+
 ---
 
 ## Development Setup
@@ -588,6 +810,13 @@ puts "Client Secret: #{app.secret}"
 ---
 
 ## Changelog
+
+### Phase 3 - Shopping Lists
+- Added shopping list management (CRUD, complete, duplicate)
+- Added list items with catalog items or custom free-text items
+- Added item status: pending, checked (purchased), not_in_stock
+- Items ordered with pending first, checked/not_in_stock at bottom
+- Owner creates/manages lists, all members can add/check items
 
 ### Phase 2 - Households & Email Confirmation
 - Added OTP-based email confirmation

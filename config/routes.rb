@@ -17,6 +17,22 @@ Rails.application.routes.draw do
         resources :members, only: %i[index destroy], controller: "households/members"
         post "leave", to: "households/members#leave"
         resources :invitations, only: %i[index create destroy], controller: "households/invitations"
+        resources :shopping_lists, only: %i[index show create update destroy], controller: "households/shopping_lists" do
+          member do
+            post :complete
+            post :duplicate
+          end
+        end
+      end
+
+      resources :shopping_lists, only: [] do
+        resources :items, only: %i[index create update destroy], controller: "shopping_list_items" do
+          member do
+            post :check
+            post :uncheck
+            post :not_in_stock
+          end
+        end
       end
 
       resources :invitations, only: %i[show], param: :token do

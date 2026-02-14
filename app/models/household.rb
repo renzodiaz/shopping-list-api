@@ -5,6 +5,7 @@ class Household < ApplicationRecord
   has_one :owner, through: :owner_membership, source: :user
 
   has_many :invitations, dependent: :destroy
+  has_many :shopping_lists, dependent: :destroy
 
   validates :name, presence: true
 end

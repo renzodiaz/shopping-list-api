@@ -1,12 +1,14 @@
 module Api::V1::Households
   class InvitationsController < Api::V1::BaseController
+    include HouseholdAuthorizable
+
     before_action :set_household
     before_action :authorize_owner!
-    before_action :set_invitation, only: [ :destroy ]
+    before_action :set_invitation, only: [:destroy]
 
     def index
       invitations = @household.invitations.pending.includes(:invited_by)
-      serialize(invitations, serializer: InvitationSerializer, options: { include: [ :invited_by ] })
+      serialize(invitations, serializer: InvitationSerializer, options: { include: [:invited_by] })
     end
 
     def create
@@ -37,14 +39,6 @@ module Api::V1::Households
 
     def invitation_params
       params.require(:invitation).permit(:email)
-    end
-
-    def authorize_owner!
-      return if @household.household_members.owners.exists?(user: current_user)
-
-      render json: {
-        errors: [ { status: "403", title: "Forbidden", detail: "Only the owner can manage invitations" } ]
-      }, status: :forbidden
     end
   end
 end

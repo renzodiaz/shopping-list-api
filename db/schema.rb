@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_09_142930) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_11_025249) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -116,6 +116,39 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_142930) do
     t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true
   end
 
+  create_table "shopping_list_items", force: :cascade do |t|
+    t.bigint "shopping_list_id", null: false
+    t.bigint "item_id"
+    t.string "custom_name"
+    t.decimal "quantity", precision: 10, scale: 2, default: "1.0", null: false
+    t.bigint "unit_type_id"
+    t.integer "status", default: 0, null: false
+    t.bigint "added_by_id", null: false
+    t.datetime "checked_at"
+    t.integer "position"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["added_by_id"], name: "index_shopping_list_items_on_added_by_id"
+    t.index ["item_id"], name: "index_shopping_list_items_on_item_id"
+    t.index ["shopping_list_id", "position"], name: "index_shopping_list_items_on_shopping_list_id_and_position"
+    t.index ["shopping_list_id"], name: "index_shopping_list_items_on_shopping_list_id"
+    t.index ["status"], name: "index_shopping_list_items_on_status"
+    t.index ["unit_type_id"], name: "index_shopping_list_items_on_unit_type_id"
+  end
+
+  create_table "shopping_lists", force: :cascade do |t|
+    t.bigint "household_id", null: false
+    t.string "name", null: false
+    t.integer "status", default: 0, null: false
+    t.bigint "created_by_id", null: false
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_shopping_lists_on_created_by_id"
+    t.index ["household_id"], name: "index_shopping_lists_on_household_id"
+    t.index ["status"], name: "index_shopping_lists_on_status"
+  end
+
   create_table "unit_types", force: :cascade do |t|
     t.string "name", null: false
     t.string "abbreviation", null: false
@@ -150,4 +183,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_142930) do
   add_foreign_key "items", "unit_types", column: "default_unit_type_id"
   add_foreign_key "oauth_access_grants", "oauth_applications", column: "application_id"
   add_foreign_key "oauth_access_tokens", "oauth_applications", column: "application_id"
+  add_foreign_key "shopping_list_items", "items"
+  add_foreign_key "shopping_list_items", "shopping_lists"
+  add_foreign_key "shopping_list_items", "unit_types"
+  add_foreign_key "shopping_list_items", "users", column: "added_by_id"
+  add_foreign_key "shopping_lists", "households"
+  add_foreign_key "shopping_lists", "users", column: "created_by_id"
 end
