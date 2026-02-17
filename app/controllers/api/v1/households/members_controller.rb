@@ -19,7 +19,9 @@ module Api::V1::Households
         }, status: :unprocessable_entity
       end
 
+      user = @member.user
       @member.destroy
+      NotificationService.notify_member_left(@household, user)
       head :no_content
     end
 
@@ -39,6 +41,7 @@ module Api::V1::Households
       end
 
       membership.destroy
+      NotificationService.notify_member_left(@household, current_user)
       head :no_content
     end
 

@@ -1,0 +1,12 @@
+Hi,
+
+You have been invited to join the household "<%= @household.name %>" by <%= @invited_by.email %>.
+
+To accept this invitation, use your Shopping List app or API with the following token:
+
+<%= @invitation.token %>
+
+This invitation expires on <%= @invitation.expires_at.strftime("%B %d, %Y at %I:%M %p") %>.
+
+---
+Shopping List API

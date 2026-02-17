@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_11_025249) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_17_014921) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -21,6 +21,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_11_025249) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_categories_on_name", unique: true
+  end
+
+  create_table "device_tokens", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "token", null: false
+    t.string "platform", null: false
+    t.string "device_name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["token"], name: "index_device_tokens_on_token", unique: true
+    t.index ["user_id"], name: "index_device_tokens_on_user_id"
   end
 
   create_table "household_members", force: :cascade do |t|
@@ -39,6 +50,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_11_025249) do
     t.string "name", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "inventory_items", force: :cascade do |t|
+    t.bigint "household_id", null: false
+    t.bigint "item_id"
+    t.string "custom_name"
+    t.decimal "quantity", precision: 10, scale: 2, default: "0.0", null: false
+    t.bigint "unit_type_id"
+    t.decimal "low_stock_threshold", precision: 10, scale: 2, default: "0.0", null: false
+    t.bigint "created_by_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_inventory_items_on_created_by_id"
+    t.index ["household_id", "custom_name"], name: "index_inventory_items_on_household_id_and_custom_name", unique: true, where: "(custom_name IS NOT NULL)"
+    t.index ["household_id", "item_id"], name: "index_inventory_items_on_household_id_and_item_id", unique: true, where: "(item_id IS NOT NULL)"
+    t.index ["household_id"], name: "index_inventory_items_on_household_id"
+    t.index ["item_id"], name: "index_inventory_items_on_item_id"
+    t.index ["unit_type_id"], name: "index_inventory_items_on_unit_type_id"
   end
 
   create_table "invitations", force: :cascade do |t|
@@ -72,6 +101,23 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_11_025249) do
     t.index ["default_unit_type_id"], name: "index_items_on_default_unit_type_id"
     t.index ["is_default"], name: "index_items_on_is_default"
     t.index ["name", "category_id"], name: "index_items_on_name_and_category_id", unique: true
+  end
+
+  create_table "notifications", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "notifiable_type"
+    t.bigint "notifiable_id"
+    t.string "notification_type", null: false
+    t.string "title", null: false
+    t.text "body"
+    t.datetime "read_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
+    t.index ["notification_type"], name: "index_notifications_on_notification_type"
+    t.index ["user_id", "created_at"], name: "index_notifications_on_user_id_and_created_at"
+    t.index ["user_id", "read_at"], name: "index_notifications_on_user_id_and_read_at"
+    t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
   create_table "oauth_access_grants", force: :cascade do |t|
@@ -144,8 +190,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_11_025249) do
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "is_recurring", default: false, null: false
+    t.string "recurrence_pattern"
+    t.integer "recurrence_day"
+    t.datetime "next_recurrence_at"
+    t.bigint "parent_shopping_list_id"
     t.index ["created_by_id"], name: "index_shopping_lists_on_created_by_id"
     t.index ["household_id"], name: "index_shopping_lists_on_household_id"
+    t.index ["next_recurrence_at"], name: "index_shopping_lists_on_next_recurrence_at", where: "((is_recurring = true) AND (next_recurrence_at IS NOT NULL))"
+    t.index ["parent_shopping_list_id"], name: "index_shopping_lists_on_parent_shopping_list_id"
     t.index ["status"], name: "index_shopping_lists_on_status"
   end
 
@@ -175,12 +228,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_11_025249) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "device_tokens", "users"
   add_foreign_key "household_members", "households"
   add_foreign_key "household_members", "users"
+  add_foreign_key "inventory_items", "households"
+  add_foreign_key "inventory_items", "items"
+  add_foreign_key "inventory_items", "unit_types"
+  add_foreign_key "inventory_items", "users", column: "created_by_id"
   add_foreign_key "invitations", "households"
   add_foreign_key "invitations", "users", column: "invited_by_id"
   add_foreign_key "items", "categories"
   add_foreign_key "items", "unit_types", column: "default_unit_type_id"
+  add_foreign_key "notifications", "users"
   add_foreign_key "oauth_access_grants", "oauth_applications", column: "application_id"
   add_foreign_key "oauth_access_tokens", "oauth_applications", column: "application_id"
   add_foreign_key "shopping_list_items", "items"
@@ -188,5 +247,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_11_025249) do
   add_foreign_key "shopping_list_items", "unit_types"
   add_foreign_key "shopping_list_items", "users", column: "added_by_id"
   add_foreign_key "shopping_lists", "households"
+  add_foreign_key "shopping_lists", "shopping_lists", column: "parent_shopping_list_id"
   add_foreign_key "shopping_lists", "users", column: "created_by_id"
 end

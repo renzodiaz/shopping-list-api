@@ -13,6 +13,18 @@ Rails.application.routes.draw do
       resources :unit_types, only: %i[index show]
       resources :items, only: %i[index show create update destroy]
 
+      resources :notifications, only: %i[index show] do
+        member do
+          post :mark_as_read
+        end
+        collection do
+          post :mark_all_as_read
+          get :unread_count
+        end
+      end
+
+      resources :device_tokens, only: %i[index create destroy]
+
       resources :households, only: %i[index show create update destroy] do
         resources :members, only: %i[index destroy], controller: "households/members"
         post "leave", to: "households/members#leave"
@@ -21,6 +33,11 @@ Rails.application.routes.draw do
           member do
             post :complete
             post :duplicate
+          end
+        end
+        resources :inventory, only: %i[index show create update destroy], controller: "households/inventory_items" do
+          member do
+            post :adjust
           end
         end
       end

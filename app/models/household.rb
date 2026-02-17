@@ -6,6 +6,7 @@ class Household < ApplicationRecord
 
   has_many :invitations, dependent: :destroy
   has_many :shopping_lists, dependent: :destroy
+  has_many :inventory_items, dependent: :destroy
 
   validates :name, presence: true
 end

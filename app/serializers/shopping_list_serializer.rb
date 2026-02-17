@@ -1,7 +1,8 @@
 class ShoppingListSerializer
   include JSONAPI::Serializer
 
-  attributes :name, :status, :completed_at, :created_at, :updated_at
+  attributes :name, :status, :completed_at, :created_at, :updated_at,
+             :is_recurring, :recurrence_pattern, :recurrence_day, :next_recurrence_at
 
   attribute :items_count do |shopping_list|
     shopping_list.shopping_list_items.count

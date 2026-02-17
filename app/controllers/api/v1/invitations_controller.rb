@@ -22,6 +22,7 @@ module Api::V1
       Invitation.transaction do
         HouseholdMember.create!(user: current_user, household: @invitation.household, role: :member)
         @invitation.accepted!
+        NotificationService.notify_invitation_accepted(@invitation, accepted_by: current_user)
       end
 
       serialize(@invitation, serializer: InvitationSerializer, options: { include: %i[household] })

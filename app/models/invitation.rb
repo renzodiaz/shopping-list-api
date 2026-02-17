@@ -12,6 +12,8 @@ class Invitation < ApplicationRecord
   before_validation :generate_token, on: :create
   before_validation :set_expiration, on: :create
 
+  after_create :send_invitation_notification
+
   scope :active, -> { pending.where("expires_at > ?", Time.current) }
   scope :expired, -> { where("expires_at <= ?", Time.current) }
 
@@ -38,5 +40,9 @@ class Invitation < ApplicationRecord
     return unless HouseholdMember.exists?(household: household, user: User.find_by(email: email))
 
     errors.add(:email, "is already a member of this household")
+  end
+
+  def send_invitation_notification
+    NotificationService.notify_invitation_received(self)
   end
 end

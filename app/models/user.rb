@@ -25,6 +25,8 @@ class User < ApplicationRecord
   has_one :owned_household, through: :owned_membership, source: :household
 
   has_many :sent_invitations, class_name: "Invitation", foreign_key: :invited_by_id, dependent: :destroy
+  has_many :notifications, dependent: :destroy
+  has_many :device_tokens, dependent: :destroy
 
   def generate_email_confirmation_otp!
     otp = SecureRandom.random_number(100_000..999_999).to_s

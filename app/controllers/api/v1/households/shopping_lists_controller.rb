@@ -47,7 +47,7 @@ module Api::V1::Households
         }, status: :unprocessable_entity
       end
 
-      @shopping_list.complete!
+      @shopping_list.complete!(completed_by: current_user)
       serialize(@shopping_list, serializer: ShoppingListSerializer, options: serializer_options)
     end
 
@@ -69,7 +69,7 @@ module Api::V1::Households
     end
 
     def shopping_list_params
-      params.require(:shopping_list).permit(:name, :status)
+      params.require(:shopping_list).permit(:name, :status, :is_recurring, :recurrence_pattern, :recurrence_day)
     end
 
     def serializer_options

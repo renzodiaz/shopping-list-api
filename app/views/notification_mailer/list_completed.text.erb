@@ -1,0 +1,10 @@
+Hi <%= @user.email %>,
+
+A shopping list has been completed in your household "<%= @household.name %>".
+
+List: <%= @shopping_list.name %>
+Completed by: <%= @completed_by.email %>
+Completed at: <%= @shopping_list.completed_at&.strftime("%B %d, %Y at %I:%M %p") %>
+
+---
+Shopping List API

@@ -1,0 +1,12 @@
+Hi <%= @user.email %>,
+
+This is a low stock alert from your household "<%= @household.name %>".
+
+Item: <%= @inventory_item.display_name %>
+Current Quantity: <%= @inventory_item.quantity %>
+Threshold: <%= @inventory_item.low_stock_threshold %>
+
+Consider adding this item to your shopping list.
+
+---
+Shopping List API

@@ -25,8 +25,14 @@
 4. [Shopping Lists](#shopping-lists)
    - [List Management](#list-management)
    - [List Items](#list-items)
-5. [Error Responses](#error-responses)
-6. [Authorization Matrix](#authorization-matrix)
+   - [Recurring Lists](#recurring-lists)
+5. [Inventory](#inventory)
+   - [Inventory Management](#inventory-management)
+6. [Notifications](#notifications)
+   - [Notification Management](#notification-management)
+   - [Device Tokens](#device-tokens)
+7. [Error Responses](#error-responses)
+8. [Authorization Matrix](#authorization-matrix)
 
 ---
 
@@ -701,6 +707,338 @@ Sets `status` to `not_in_stock` and records `checked_at` timestamp.
 
 ---
 
+### Recurring Lists
+
+Shopping lists can be configured to automatically create new instances on a schedule.
+
+#### Create Recurring List
+
+**Endpoint:** `POST /api/v1/households/:household_id/shopping_lists`
+**Auth Required:** Yes (owner only)
+
+**Request Body:**
+```json
+{
+  "shopping_list": {
+    "name": "Weekly Groceries",
+    "is_recurring": true,
+    "recurrence_pattern": "weekly",
+    "recurrence_day": 1
+  }
+}
+```
+
+**Recurrence Patterns:**
+
+| Pattern | recurrence_day | Description |
+|---------|----------------|-------------|
+| `daily` | not required | Creates new list every day at midnight |
+| `weekly` | 0-6 (Sunday-Saturday) | Creates new list on specified day of week |
+| `monthly` | 1-31 | Creates new list on specified day of month |
+
+**Note:** When `next_recurrence_at` is reached, a new shopping list is automatically created with all items from the template list, and notifications are sent to all household members.
+
+#### Update Recurrence Settings
+
+**Endpoint:** `PUT /api/v1/households/:household_id/shopping_lists/:id`
+**Auth Required:** Yes (owner only)
+
+**Request Body:**
+```json
+{
+  "shopping_list": {
+    "is_recurring": true,
+    "recurrence_pattern": "monthly",
+    "recurrence_day": 15
+  }
+}
+```
+
+#### Disable Recurrence
+
+**Request Body:**
+```json
+{
+  "shopping_list": {
+    "is_recurring": false
+  }
+}
+```
+
+---
+
+## Inventory
+
+### Inventory Management
+
+Track household inventory with low-stock alerts.
+
+#### List Inventory Items
+
+**Endpoint:** `GET /api/v1/households/:household_id/inventory`
+**Auth Required:** Yes (member or owner)
+
+**Success Response:** `200 OK`
+```json
+{
+  "data": [
+    {
+      "id": "1",
+      "type": "inventory_item",
+      "attributes": {
+        "quantity": "5.0",
+        "custom_name": null,
+        "low_stock_threshold": "2.0",
+        "display_name": "Milk",
+        "low_stock": false,
+        "out_of_stock": false,
+        "created_at": "2024-02-09T12:00:00.000Z"
+      },
+      "relationships": {
+        "item": { "data": { "id": "1", "type": "item" } },
+        "unit_type": { "data": { "id": "1", "type": "unit_type" } },
+        "created_by": { "data": { "id": "1", "type": "user" } }
+      }
+    }
+  ]
+}
+```
+
+#### Get Inventory Item
+
+**Endpoint:** `GET /api/v1/households/:household_id/inventory/:id`
+**Auth Required:** Yes (member or owner)
+
+#### Create Inventory Item
+
+**Endpoint:** `POST /api/v1/households/:household_id/inventory`
+**Auth Required:** Yes (owner only)
+
+**Request Body (Catalog Item):**
+```json
+{
+  "inventory_item": {
+    "item_id": 1,
+    "quantity": 10,
+    "unit_type_id": 1,
+    "low_stock_threshold": 2
+  }
+}
+```
+
+**Request Body (Custom Item):**
+```json
+{
+  "inventory_item": {
+    "custom_name": "Homemade Jam",
+    "quantity": 3,
+    "low_stock_threshold": 1
+  }
+}
+```
+
+#### Update Inventory Item
+
+**Endpoint:** `PUT /api/v1/households/:household_id/inventory/:id`
+**Auth Required:** Yes (member or owner)
+
+**Owner Update:**
+```json
+{
+  "inventory_item": {
+    "quantity": 8,
+    "low_stock_threshold": 3
+  }
+}
+```
+
+**Member Update (quantity only):**
+```json
+{
+  "inventory_item": {
+    "quantity": 8
+  }
+}
+```
+
+**Note:** Members can only update quantity. Owners can update all fields.
+
+#### Delete Inventory Item
+
+**Endpoint:** `DELETE /api/v1/households/:household_id/inventory/:id`
+**Auth Required:** Yes (owner only)
+
+**Success Response:** `204 No Content`
+
+#### Adjust Quantity
+
+Increment or decrement quantity by a specific amount.
+
+**Endpoint:** `POST /api/v1/households/:household_id/inventory/:id/adjust`
+**Auth Required:** Yes (member or owner)
+
+**Request Body:**
+```json
+{
+  "amount": -2
+}
+```
+
+**Note:** Quantity will not go below 0. Use positive values to add, negative to subtract.
+
+**Low Stock Notifications:**
+- When quantity drops to or below `low_stock_threshold`, notifications are sent to all household members
+- When quantity reaches 0, out-of-stock notifications are sent
+
+---
+
+## Notifications
+
+### Notification Management
+
+View and manage in-app notifications.
+
+#### List Notifications
+
+**Endpoint:** `GET /api/v1/notifications`
+**Auth Required:** Yes
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `unread` | boolean | Filter to unread only |
+| `read` | boolean | Filter to read only |
+| `type` | string | Filter by notification type |
+| `limit` | integer | Limit number of results |
+
+**Example:** `GET /api/v1/notifications?unread=true&limit=20`
+
+**Success Response:** `200 OK`
+```json
+{
+  "data": [
+    {
+      "id": "1",
+      "type": "notification",
+      "attributes": {
+        "notification_type": "low_stock",
+        "title": "Low Stock Alert",
+        "body": "Milk is running low (2 remaining)",
+        "read": false,
+        "read_at": null,
+        "notifiable_type": "inventory_item",
+        "notifiable_id": 1,
+        "created_at": "2024-02-09T12:00:00.000Z"
+      }
+    }
+  ]
+}
+```
+
+**Notification Types:**
+| Type | Description |
+|------|-------------|
+| `low_stock` | Inventory item below threshold |
+| `out_of_stock` | Inventory item quantity is 0 |
+| `list_completed` | Shopping list completed |
+| `item_checked` | Item checked off list |
+| `invitation_received` | New household invitation |
+| `invitation_accepted` | Someone joined your household |
+| `member_joined` | New member in household |
+| `member_left` | Member left household |
+| `recurring_list_created` | Auto-created recurring list |
+
+#### Get Notification
+
+**Endpoint:** `GET /api/v1/notifications/:id`
+**Auth Required:** Yes
+
+#### Mark as Read
+
+**Endpoint:** `POST /api/v1/notifications/:id/mark_as_read`
+**Auth Required:** Yes
+
+#### Mark All as Read
+
+**Endpoint:** `POST /api/v1/notifications/mark_all_as_read`
+**Auth Required:** Yes
+
+**Success Response:** `204 No Content`
+
+#### Get Unread Count
+
+**Endpoint:** `GET /api/v1/notifications/unread_count`
+**Auth Required:** Yes
+
+**Success Response:** `200 OK`
+```json
+{
+  "data": {
+    "unread_count": 5
+  }
+}
+```
+
+---
+
+### Device Tokens
+
+Register device tokens for push notifications (FCM/APNS).
+
+#### List Device Tokens
+
+**Endpoint:** `GET /api/v1/device_tokens`
+**Auth Required:** Yes
+
+**Success Response:** `200 OK`
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "type": "device_token",
+      "attributes": {
+        "token": "fcm_token_abc123...",
+        "platform": "ios",
+        "device_name": "iPhone 15 Pro",
+        "created_at": "2024-02-09T12:00:00.000Z"
+      }
+    }
+  ]
+}
+```
+
+#### Register Device Token
+
+Creates or updates a device token for push notifications.
+
+**Endpoint:** `POST /api/v1/device_tokens`
+**Auth Required:** Yes
+
+**Request Body:**
+```json
+{
+  "device_token": {
+    "token": "fcm_token_abc123...",
+    "platform": "ios",
+    "device_name": "iPhone 15 Pro"
+  }
+}
+```
+
+**Platforms:** `ios`, `android`, `web`
+
+**Success Response:** `201 Created` (new) or `200 OK` (updated existing)
+
+#### Remove Device Token
+
+**Endpoint:** `DELETE /api/v1/device_tokens/:id`
+**Auth Required:** Yes
+
+**Success Response:** `204 No Content`
+
+---
+
 ## Error Responses
 
 ### Standard Error Format
@@ -774,8 +1112,21 @@ Sets `status` to `not_in_stock` and records `checked_at` timestamp.
 | Delete shopping list | ✅ | ❌ | ❌ |
 | Complete shopping list | ✅ | ❌ | ❌ |
 | Duplicate shopping list | ✅ | ❌ | ❌ |
+| Configure recurrence | ✅ | ❌ | ❌ |
 | Add/Edit/Delete list items | ✅ | ✅ | ❌ |
 | Check/Uncheck items | ✅ | ✅ | ❌ |
+
+### Inventory Permissions
+
+| Action | Owner | Member | Non-member |
+|--------|:-----:|:------:|:----------:|
+| List inventory items | ✅ | ✅ | ❌ |
+| View inventory item | ✅ | ✅ | ❌ |
+| Create inventory item | ✅ | ❌ | ❌ |
+| Update inventory item (all fields) | ✅ | ❌ | ❌ |
+| Update inventory item (quantity only) | ✅ | ✅ | ❌ |
+| Delete inventory item | ✅ | ❌ | ❌ |
+| Adjust quantity | ✅ | ✅ | ❌ |
 
 ---
 
@@ -810,6 +1161,17 @@ puts "Client Secret: #{app.secret}"
 ---
 
 ## Changelog
+
+### Phase 4 - Inventory, Notifications & Recurring Lists
+- Added inventory management (CRUD, adjust quantity)
+- Added low-stock and out-of-stock notifications
+- Added in-app notification system
+- Added device token registration for push notifications (FCM/APNS)
+- Added email notifications for alerts
+- Added recurring shopping lists (daily, weekly, monthly)
+- Added notification triggers for various events (inventory alerts, list completion, member changes)
+- Owner creates/manages inventory; members can adjust quantity
+- All household members receive notifications
 
 ### Phase 3 - Shopping Lists
 - Added shopping list management (CRUD, complete, duplicate)

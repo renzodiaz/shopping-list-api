@@ -1,0 +1,9 @@
+Hi <%= @user.email %>,
+
+A new shopping list has been automatically created from your recurring list in household "<%= @household.name %>".
+
+List: <%= @shopping_list.name %>
+Created at: <%= @shopping_list.created_at.strftime("%B %d, %Y at %I:%M %p") %>
+
+---
+Shopping List API
